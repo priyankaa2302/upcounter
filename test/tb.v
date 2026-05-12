@@ -8,7 +8,7 @@ module tb ();
 
   // Dump the signals to a FST file. You can view it with gtkwave or surfer.
   initial begin
-    $dumpfile("tb.fst");
+     $dumpfile("tb.vcd");
     $dumpvars(0, tb);
     #1;
   end
@@ -28,7 +28,7 @@ module tb ();
 `endif
 
   // Replace tt_um_example with your module name:
-  tt_um_example user_project (
+  tt_um_upcounter user_project (
 
       // Include power ports for the Gate Level test:
 `ifdef GL_TEST
@@ -45,5 +45,25 @@ module tb ();
       .clk    (clk),      // clock
       .rst_n  (rst_n)     // not reset
   );
+
+    initial clk = 0;
+  always #5 clk = ~clk;
+
+  // Stimulus
+  initial begin
+    ena = 1;
+    ui_in = 0;
+    uio_in = 0;
+
+    // Reset
+    rst_n = 0;
+    #20;
+    rst_n = 1;
+
+    // Run counter
+    #200;
+
+    $finish;
+  end
 
 endmodule
