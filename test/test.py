@@ -5,7 +5,7 @@ from cocotb.triggers import ClockCycles
 @cocotb.test()
 async def test_upcounter(dut):
 
-    dut._log.info("Start")
+    dut._log.info("Start test")
 
     # Clock
     cocotb.start_soon(Clock(dut.clk, 10, unit="us").start())
@@ -15,17 +15,24 @@ async def test_upcounter(dut):
     dut.ui_in.value = 0
     dut.uio_in.value = 0
 
-    # Reset (IMPORTANT: hold longer)
+    # Proper reset
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
 
-    # Check counter
+    # Wait 1 cycle after reset (VERY IMPORTANT in TT CI)
+    await ClockCycles(dut.clk, 1)
+
     expected = 0
 
     for i in range(10):
         await ClockCycles(dut.clk, 1)
-        expected = (expected + 1) % 256
 
-        assert dut.uo_out.value.integer == expected, \
-            f"Mismatch: expected {expected}, got {dut.uo_out.value.integer}"
+        expected = (expected + 1) & 0xFF
+
+        actual = dut.uo_out.value.integer
+
+        dut._log.info(f"{i}: expected={expected}, got={actual}")
+
+        assert actual == expected, \
+            f"Mismatch at {i}: expected {expected}, got {actual}"
